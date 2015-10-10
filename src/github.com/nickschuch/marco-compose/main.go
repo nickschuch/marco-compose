@@ -22,6 +22,7 @@ var (
 	cliEndpoint  = kingpin.Flag("endpoint", "The Docker endpoint.").Default("unix:///var/run/docker.sock").OverrideDefaultFromEnvar("DOCKER_HOST").String()
 	cliFrequency = kingpin.Flag("frequency", "How often to push to Marco").Default("15").OverrideDefaultFromEnvar("MARCO_COMPOSE_FREQUENCY").Int64()
 	cliPorts     = kingpin.Flag("ports", "The ports you wish to proxy.").Default("80,8080,2368,8983").OverrideDefaultFromEnvar("MARCO_COMPOSE_PORTS").String()
+	cliDomain    = kingpin.Flag("domain", "The base domain for all compose records..").Default("").OverrideDefaultFromEnvar("MARCO_COMPOSE_DOMAIN").String()
 )
 
 func main() {
@@ -100,6 +101,10 @@ func getList() (map[string][]string, error) {
 			continue
 		}
 
+		if *cliDomain != "" {
+			envDomain = envDomain + "." + *cliDomain
+		}
+
 		// Here we build the proxy URL based on the exposed values provided
 		// by NetworkSettings. If a container has not been exposed, it will
 		// not work. We then build a URL based on these exposed values and:
@@ -129,7 +134,7 @@ func GetContainerDomain(l map[string]string) (string, error) {
 		return "", errors.New("Cannot find project label")
 	}
 
-	return l[service] + "." + l[project], nil
+	return l[project] + "-" + l[service], nil
 }
 
 func getPort(exposed string) string {
